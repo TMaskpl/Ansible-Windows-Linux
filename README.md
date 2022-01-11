@@ -13,7 +13,7 @@ or only same Tags
 ansible-playbook -i hosts install-choco.yml --tags "copy, service"
 
 
-# Uruchomieniw WinRM na Hoscie docelowym
+# Uruchomienie WinRM, Powershell - Admin
 
 # Ansible
 Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1'))
