@@ -1,0 +1,57 @@
+---
+  - hosts: all
+    gather_facts: false
+    tasks:
+    - name: Install Chocolate
+      win_chocolatey:
+        name: chocolatey
+        state: present
+        source: http://internal/odata/repo/ChocolateyInstall.ps1
+      tags: ["install"]
+
+    - name: Install Package 
+      win_chocolatey:
+        name:
+            - python3
+            - sysinternals
+            - windirstat
+            - git
+        state: present
+      tags: ["install"]
+
+    - name: Create directory script
+      ignore_errors: true
+      ansible.windows.win_file:
+        path: c:\Users\daniel\script
+        state: directory
+      tags: ["copy"]
+
+    - name: Copy file to system
+      copy:
+        src: /home/dniemczok/Python/Ansible/TST/script/tmask_search_del.py
+        dest: c:\Users\daniel\script\tmask_search_del.py
+      tags: ["copy"]
+
+    - name: Run script
+      ansible.windows.win_command: powershell.exe -
+      args:
+        stdin: python.exe c:\Users\daniel\script\tmask_search_del.py > c:\Users\daniel\script\result.txt      
+      tags: ["run"]
+
+    - name: Update windows
+      win_updates:
+        category_names:
+          - SecurityUpdates
+          - CriticalUpdates
+          - UpdateRollups
+        # whitelist:
+        #   - KB4073819
+        #   - KB4074228
+        state: installed
+      tags: ["update"]
+
+    - name: Set start service if stopped
+      ansible.windows.win_service:
+        name: spooler
+        state: started
+      tags: ["service"]
