@@ -1,0 +1,106 @@
+# __author__ = "biuro@tmask.pl"
+# __copyright__ = "Copyright (C) 2021 TMask.pl"
+# __license__ = "MIT License"
+# __version__ = "1.0"
+
+---
+- hosts: "{{ host_var }}"
+  vars:
+    ansible_host_key_checking: false
+
+  tasks:
+  - name: Data i czas
+    ignore_errors: yes
+    debug: var=ansible_date_time.iso8601
+    tags: ["os"] 
+
+  - name: OS
+    ignore_errors: yes
+    debug: 
+      msg: System Operacyjny {{ ansible_distribution }} wersja {{ ansible_distribution_version }}
+    tags: ["os"] 
+
+  - name: Hostname
+    ignore_errors: yes
+    debug: var=ansible_nodename
+    tags: ["os"] 
+
+  - name: Architektura
+    ignore_errors: yes
+    debug: var=ansible_architecture
+    tags: ["hardware"] 
+
+  - name: Ilosc procesorów
+    ignore_errors: yes
+    debug: var=ansible_processor_count
+    tags: ["cpu"] 
+
+  - name: CPU utilization
+    ignore_errors: yes
+    shell: grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage "%"}'
+    register: output
+    tags: ["ram"] 
+  - debug:
+      var: output.stdout_lines
+    tags: ["ram"] 
+
+  - name: Top 10 process
+    shell: ps -eo pid,cmd,%mem,%cpu --sort=-%cpu,%mem | head
+    register: output
+    ignore_errors: yes
+  - debug:
+      var: output.stdout_lines
+    tags: ["net"]
+
+  - name: Ilosc RAM
+    ignore_errors: yes
+    shell: free -h
+    register: output
+    tags: ["ram"] 
+  - debug:
+      var: output.stdout_lines
+    tags: ["ram"] 
+
+  - name: Free RAM
+    ignore_errors: yes
+    assert:
+      that:
+        - ((ansible_memory_mb.real.free * 100) / ansible_memory_mb.real.total) < 30
+      fail_msg: "ERROR - {{ ansible_memory_mb.real.free }} MB"
+      success_msg: "OK - {{ ansible_memory_mb.real.free }} MB"
+    tags: ["ram"] 
+
+  - name: Miejsce na dysku
+    shell: df -h | grep -v -E "(udev|tmpfs)"
+    register: output
+    ignore_errors: yes
+  - debug:
+      var: output.stdout_lines
+    tags: ["dysk"] 
+
+  - name: Adresy IP
+    shell: hostname -I
+    register: output
+    ignore_errors: yes
+  - debug:
+      var: output.stdout_lines
+    tags: ["net"] 
+
+
+  - name: Listen port
+    shell: ss -ntlp | awk '{print $1, $4}'
+    register: output
+    ignore_errors: yes
+  - debug:
+      var: output.stdout_lines
+    tags: ["net"]
+
+  - name: Count Established
+    become: true
+    become_user: root
+    shell: lsof | grep ESTABLISHED | wc -l
+    register: output
+    ignore_errors: yes
+  - debug:
+      var: output.stdout_lines
+    tags: ["net"]
