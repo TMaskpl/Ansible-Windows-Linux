@@ -1,0 +1,50 @@
+---
+  - hosts: "{{ mt_id }}"
+    gather_facts: false
+    vars:
+      ansible_host_key_checking: false
+    tasks:
+    - name: Info o hostach
+      vars:
+        msg: |
+          Info
+
+      debug:
+        msg: "{{ msg.split('\n') }}"
+    - name: Show name
+      routeros_command:
+        commands:
+        - /system identity print
+      register: output
+    - debug:
+        msg: "{{output.stdout_lines}}"
+
+    - name: Set package Long-Term
+      routeros_command:
+        commands:
+        - /system package update set channel=long-term
+      register: output
+    - debug:
+        msg: "{{output.stdout_lines}}"
+
+    - name: Check last version Long-Term
+      routeros_command:
+        commands:
+        - /system package update check-for-updates
+      register: output
+    - debug:
+        msg: "{{output.stdout_lines}}"
+
+    - name: Download last version Long-Term
+      routeros_command:
+        commands:
+        - /system package update download
+      vars:
+        ansible_command_timeout: 80
+      register: output
+    - debug:
+        msg: "{{output.stdout_lines}}"
+
+    - name: Reboot
+      routeros_command:
+        commands: ":execute {/system reboot};"
