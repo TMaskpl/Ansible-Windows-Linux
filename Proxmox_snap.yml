@@ -1,0 +1,38 @@
+---
+  - hosts: "{{ host_pve }}"
+    gather_facts: false
+    vars:
+      ansible_host_key_checking: false
+    tasks:
+    - name: Info o hostach
+      vars:
+        msg: |
+          Jakies info
+      debug:
+        msg: "{{ msg.split('\n') }}"
+
+    - name: "Snapshot PVE {{ host_pve }} vm {{ vm_id }}"
+      become: true
+      become_user: root
+      shell: |
+        DATE=$(date '+%Y-%m-%d_%H-%M')
+        qm snapshot "{{ vm_id }}" TST_$(date '+%Y-%m-%d_%H-%M')
+      args:
+        executable: /bin/bash
+      register: output
+    - debug:
+        var: output.stdout
+      tags: ["snapshot"]   
+
+    - name: List Snapshot "{{ vm_id }}"
+      become: true
+      become_user: root
+      shell: |
+        qm listsnapshot "{{ vm_id }}"
+      args:
+        executable: /bin/bash
+      register: output
+      ignore_errors: yes
+    - debug:
+        var: output.stdout_lines
+      tags: ["snapshot"] 
