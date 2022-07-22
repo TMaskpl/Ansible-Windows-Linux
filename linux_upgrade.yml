@@ -1,0 +1,33 @@
+---
+- name: Install all update latest
+  hosts: all
+  become: yes
+
+  tasks:
+
+    - name: RHEL install
+      yum:
+        name: "*"
+        state: latest
+        exclude: "{{ exclude_packages | default(omit) }}"
+      when: "ansible_pkg_mgr == 'yum'"
+      async: 3600
+      pool: 0
+
+
+    - name: Debian/Ubuntu
+      apt:
+        name: aptitude
+        state: present
+        update_cache: yes
+      when: "ansible_pkg_mgr == 'apt'"
+
+    - name: Debian/Ubuntu install
+      apt:
+        update_cache: yes
+        cache_valid_time: 7200
+        upgrade: full
+        only_upgrade: yes
+      when: "ansible_pkg_mgr == 'apt'"
+      async: 3600
+      pool: 0
